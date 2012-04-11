@@ -30,6 +30,8 @@ public class MoodMeterActivity extends ListActivity
 		//dbStart = new DBHelp(this);
 		//dbStart.open();
 
+		thisActivity = this;
+
 		setContentView(R.layout.viewmood);
 		progressLabel = (TextView) findViewById(R.id.volume);
 		topicEdit = (EditText) findViewById(R.id.topicField);
@@ -65,14 +67,14 @@ public class MoodMeterActivity extends ListActivity
 		setContentView(R.layout.viewmood);
 
 		// start the updating of messages
-		callBack.run();
+		//callBack.run();
 		handler.sendEmptyMessage(0);
 	}
 
 	public void clickT2(View v) 
 	{		
 		setContentView(R.layout.main);
-		
+
 		// stop updating messages
 		handler.removeMessages(0);
 		//dbStart.readPersistence();	
@@ -123,8 +125,7 @@ public class MoodMeterActivity extends ListActivity
 
 	public void setClicked(View v)
 	{
-		String topic;
-
+		topicEdit = (EditText) findViewById(R.id.topicField);
 		topic = topicEdit.getText().toString();
 
 		if (socket != null)
@@ -133,13 +134,32 @@ public class MoodMeterActivity extends ListActivity
 			{
 				writer.write("Topic:" + topic + "\n");
 				writer.flush();
-				Log.i("MoodMeter", "Topic updated");
+				Log.i("MoodMeter", "Topic updated: " + topic);
+
+				//callBack.run();
+				update();
 			}
 			catch (Exception e)
 			{
 				Log.i("MoodMeter", "Topic update failed");
 			}
 		}
+	}
+
+	public void update()
+	{
+		if (topic.length() >= 6)
+			topicEdit.setText(topic);
+		else
+			topicEdit.setText("No Topic");
+
+		// if no topic don't write anything
+		if (!topic.contains("No Topic"))
+			adapter = new ArrayAdapter<String>(thisActivity, android.R.layout.simple_list_item_1, moods);
+		else 
+			adapter = new ArrayAdapter<String>(thisActivity, android.R.layout.simple_list_item_1, new ArrayList<String>());
+
+		setListAdapter(adapter);
 	}
 
 	// Runnable object so we can call back to it to update our adapter
@@ -149,30 +169,42 @@ public class MoodMeterActivity extends ListActivity
 		{
 			try
 			{
-				String topic;
-				String name;
+				Log.i("MoodMeter", "Updating");
+
+				String name = "";
+				moods = new ArrayList<String>();				
 
 				// ask server for status
-				writer.write("Status");
+				writer.write("Status\n");
+				writer.flush();
 
 				// the first line will be the topic
 				topic = reader.readLine();
-				topicEdit.setText(topic.substring(5));
+				topicEdit.setText(topic.substring(6));
 
-				// continue to read lines until no more
-				while ( (name = reader.readLine() ) != null)
+				// continue to read lines until we get success returned
+				name = reader.readLine();
+				while ( !(name.equals("Okay\n")) && name.length() >= 6)
 				{
-					moods = new ArrayList<String>();
+					// if no topic don't write anything
+					if (topic.contains("No Topic"))
+						break;
 
-					moods.add(name.substring(4));
+					// else add the names to the list
+					moods.add(name.substring(5));						
+
+					Log.i("MoodMeter", "Updated Name: " + name);
+					name = reader.readLine();
 				}
 
-				adapter = new ArrayAdapter<String>(null, android.R.layout.simple_list_item_1, moods);
+				adapter = new ArrayAdapter<String>(thisActivity, android.R.layout.simple_list_item_1, moods);
 				setListAdapter(adapter);
+				Log.i("MoodMeter", "ListView updated");
 			}
 			catch (Exception e)
 			{
 				Log.i("MoodMeter", "Unable to update");
+				e.printStackTrace();
 			}
 
 		}
@@ -194,8 +226,10 @@ public class MoodMeterActivity extends ListActivity
 	private TextView progressLabel;
 	private DBHelp dbStart;
 	private EditText topicEdit;
+	private ListActivity thisActivity;
 
 	// List view stuff
+	private String topic = "";
 	private ArrayAdapter<String> adapter;
 	private ArrayList<String> moods = new ArrayList<String>();
 

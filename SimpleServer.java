@@ -52,12 +52,15 @@ public final class SimpleServer extends Thread
 					new OutputStreamWriter(client.getOutputStream())));
 
 			// Write Mood Server to output Stream
-			writer.print("Mood Server\n");
+			writer.write("Mood Server\n");
 			writer.flush();
 
 			String line;
-			while ( (line = reader.readLine()) != null )
+			
+			// sit in while loop and read any inputs
+			while (client != null)
 			{
+				line = reader.readLine();
 				System.out.println("Input read");
 				// process the input
 				process(line);
@@ -71,6 +74,9 @@ public final class SimpleServer extends Thread
 
 	public void process(String input)
 	{
+		if (input == null)
+			return;
+		
 		System.out.println("Processing");
 
 		// register the name to hashMap
@@ -100,7 +106,7 @@ public final class SimpleServer extends Thread
 			hashMap.put(name, "0");
 
 			// output okay
-			writer.println(success);
+			writer.write(success);
 			writer.flush();
 
 			System.out.println("Registered user: " + name);
@@ -124,10 +130,10 @@ public final class SimpleServer extends Thread
 			curTopic = topic;
 
 			// output okay
-			writer.println(success);
+			writer.write(success);
 			writer.flush();
 
-			System.out.println("New topic set: " + topic);
+			System.out.println("New topic set: " + curTopic);
 		}
 
 		// set mood
@@ -151,15 +157,17 @@ public final class SimpleServer extends Thread
 			hashMap.put(name, num);
 
 			// output okay
-			writer.println(success);
+			writer.write(success);
 			writer.flush();
 
 			System.out.println("" + name + "'s mood changed to: " + num);
 		}
 
 		// Write the hashmap to output
-		else if (input.contains("Status"))
-		{
+		else if (input.equals("Status"))
+		{			
+			System.out.println("Sending system status");
+			
 			// Get a set of the entries 
 			Set<Entry<String, String>> set = hashMap.entrySet();
 
@@ -167,16 +175,19 @@ public final class SimpleServer extends Thread
 			Iterator<Entry<String, String>> i = set.iterator();
 
 			// Display elements
-			writer.print("Topic:" + curTopic + "\n");
+			writer.write("Topic:" + curTopic + "\n");
+			System.out.print("Sending-> Topic:" + curTopic + "\n");
+			
 			while(i.hasNext()) 
 			{ 
 				Map.Entry me = (Map.Entry)i.next(); 
 
-				writer.print("Mood:" + me.getKey() + ":" + me.getValue() + "\n");
-			} 
+				writer.write("Mood:" + me.getKey() + ":" + me.getValue() + "\n");
+				System.out.print("Sending-> Mood:" + me.getKey() + ":" + me.getValue() + "\n");
+			}
 
-			writer.println(success);
-			writer.flush();
+			writer.write(success);
+			//writer.flush();
 
 			System.out.println("Status update sent to device");
 		}
