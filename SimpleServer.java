@@ -56,7 +56,7 @@ public final class SimpleServer extends Thread
 			writer.flush();
 
 			String line;
-			
+
 			// sit in while loop and read any inputs
 			while (client != null)
 			{
@@ -76,7 +76,7 @@ public final class SimpleServer extends Thread
 	{
 		if (input == null)
 			return;
-		
+
 		System.out.println("Processing");
 
 		// register the name to hashMap
@@ -115,6 +115,9 @@ public final class SimpleServer extends Thread
 		// set new topic
 		else if (input.contains("Topic"))
 		{
+			// reset user fields to zero
+			reset();
+
 			String topic = null;
 
 			for (int i = 0; i < input.length(); i++)
@@ -167,7 +170,7 @@ public final class SimpleServer extends Thread
 		else if (input.equals("Status"))
 		{			
 			System.out.println("Sending system status");
-			
+
 			// Get a set of the entries 
 			Set<Entry<String, String>> set = hashMap.entrySet();
 
@@ -177,7 +180,7 @@ public final class SimpleServer extends Thread
 			// Display elements
 			writer.write("Topic:" + curTopic + "\n");
 			System.out.print("Sending-> Topic:" + curTopic + "\n");
-			
+
 			while(i.hasNext()) 
 			{ 
 				Map.Entry me = (Map.Entry)i.next(); 
@@ -187,9 +190,25 @@ public final class SimpleServer extends Thread
 			}
 
 			writer.write(success);
-			//writer.flush();
+			writer.flush();
 
 			System.out.println("Status update sent to device");
+		}
+	}
+
+	// reset all values to zero
+	public void reset()
+	{
+		// Get a set of the entries 
+		Set<Entry<String, String>> set = hashMap.entrySet();
+
+		// Get an iterator 
+		Iterator<Entry<String, String>> i = set.iterator();
+
+		while(i.hasNext()) 
+		{ 
+			Map.Entry me = (Map.Entry)i.next(); 
+			me.setValue(0);
 		}
 	}
 }
